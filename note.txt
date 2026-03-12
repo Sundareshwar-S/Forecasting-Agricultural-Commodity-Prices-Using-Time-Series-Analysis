@@ -1,0 +1,27 @@
+commodity-price-forecast/
+│
+├── main.py
+│
+├── data/
+│
+├── modules/
+│   ├── data_extraction.py
+│   ├── data_cleaning.py
+│   ├── visualization.py
+│   ├── moving_average.py
+│   ├── decomposition.py
+│   ├── outlier_detection.py
+│   └── forecasting_model.py
+│
+├── templates/
+│   └── index.html
+│
+├── static/
+│   ├── css/
+│   ├── js/
+│   └── plots/
+│
+├── utils/
+│   └── db_connection.py
+│
+└── requirements.txt
