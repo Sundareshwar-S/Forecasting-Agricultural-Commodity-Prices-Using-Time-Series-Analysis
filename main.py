@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request
-from pymongo import MongoClient
+import pandas as pd
 
 # Import project modules
 from modules.data_extraction import extract_data
@@ -7,17 +7,16 @@ from modules.data_cleaning import clean_data
 from modules.visualization import plot_price_trend
 from modules.moving_average import calculate_moving_average
 from modules.outlier_detection import detect_outliers
+from modules.decomposition import decompose_time_series
 from modules.forecasting_model import forecast_prices
 
 
 app = Flask(__name__)
 
 # ---------------------------------------
-# MongoDB Connection
+# CSV Data Source
 # ---------------------------------------
-client = MongoClient("mongodb://localhost:27017/")
-db = client["agricultureDB"]
-collection = db["prices2025"]
+CSV_FILE = "reduced_dataset.csv"
 
 
 # ---------------------------------------
@@ -26,8 +25,9 @@ collection = db["prices2025"]
 @app.route("/")
 def index():
 
-    # Get list of commodities
-    commodities = collection.distinct("Commodity")
+    # Get list of commodities from CSV
+    df = pd.read_csv(CSV_FILE)
+    commodities = sorted(df["Commodity"].unique().tolist())
     commodities.sort()
 
     return render_template(
@@ -72,7 +72,12 @@ def forecast():
     df, outlier_plot = detect_outliers(df)
 
     # ---------------------------------------
-    # Step 6: Forecasting (365 days = Full Year 2026)
+    # Step 6: Time Series Decomposition
+    # ---------------------------------------
+    df, decomposition_plot = decompose_time_series(df, period=30)
+
+    # ---------------------------------------
+    # Step 7: Forecasting (365 days = Full Year 2026)
     # -----------------------------------------------
     # Predict prices for the entire year 2026 (365 days ahead from last data point in 2025)
     forecast_values, conf_lower, conf_upper, forecast_plot, metrics = forecast_prices(df, forecast_days=365)
@@ -93,6 +98,7 @@ def forecast():
         trend_plot=trend_plot,
         ma_plot=ma_plot,
         outlier_plot=outlier_plot,
+        decomposition_plot=decomposition_plot,
         forecast_plot=forecast_plot,
         forecast=forecast_list,
         conf_lower=conf_lower_list,
