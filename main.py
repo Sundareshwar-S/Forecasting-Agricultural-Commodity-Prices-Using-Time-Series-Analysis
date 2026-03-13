@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request
-import pandas as pd
+from pymongo import MongoClient
 
 # Import project modules
 from modules.data_extraction import extract_data
@@ -14,9 +14,11 @@ from modules.forecasting_model import forecast_prices
 app = Flask(__name__)
 
 # ---------------------------------------
-# CSV Data Source
+# MongoDB Connection
 # ---------------------------------------
-CSV_FILE = "reduced_dataset.csv"
+client = MongoClient("mongodb://localhost:27017/")
+db = client["agricultureDB"]
+collection = db["prices2025"]
 
 
 # ---------------------------------------
@@ -25,9 +27,8 @@ CSV_FILE = "reduced_dataset.csv"
 @app.route("/")
 def index():
 
-    # Get list of commodities from CSV
-    df = pd.read_csv(CSV_FILE)
-    commodities = sorted(df["Commodity"].unique().tolist())
+    # Get list of commodities
+    commodities = collection.distinct("Commodity")
     commodities.sort()
 
     return render_template(

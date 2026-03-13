@@ -1,17 +1,17 @@
 """
 Data Extraction Module
 ----------------------
-This module retrieves commodity price data from CSV file
+This module retrieves commodity price data from MongoDB
 based on the commodity selected by the user.
 """
 
+from pymongo import MongoClient
 import pandas as pd
-import os
 
 
 def extract_data(commodity):
     """
-    Retrieve commodity price data from CSV file.
+    Retrieve commodity price data from MongoDB.
 
     Parameters
     ----------
@@ -21,30 +21,39 @@ def extract_data(commodity):
     Returns
     -------
     pandas.DataFrame
-        Raw dataset retrieved from CSV file.
+        Raw dataset retrieved from MongoDB.
     """
 
-    print("\nReading data from CSV file...")
+    print("\nConnecting to MongoDB...")
 
     # --------------------------------
-    # Read CSV File
+    # MongoDB Connection
     # --------------------------------
-    csv_path = "reduced_dataset.csv"
-    
-    if not os.path.exists(csv_path):
-        raise FileNotFoundError(f"CSV file not found: {csv_path}")
-    
-    # Read the entire CSV
-    df_all = pd.read_csv(csv_path)
-    
-    print(f"Total records in CSV: {len(df_all)}")
+    client = MongoClient("mongodb://localhost:27017/")
+    db = client["agricultureDB"]
+    collection = db["prices2025"]
+
+    print("Connected to MongoDB")
 
     # --------------------------------
-    # Filter by Commodity
+    # Query MongoDB
     # --------------------------------
     print(f"Retrieving data for commodity: {commodity}")
 
-    df = df_all[df_all["Commodity"] == commodity][["Arrival_Date", "Modal_Price", "Market"]].copy()
+    data = collection.find(
+        {"Commodity": commodity},
+        {
+            "Arrival_Date": 1,
+            "Modal_Price": 1,
+            "Market": 1,
+            "_id": 0
+        }
+    )
+
+    # --------------------------------
+    # Convert to pandas DataFrame
+    # --------------------------------
+    df = pd.DataFrame(list(data))
 
     print(f"Records retrieved: {len(df)}")
 
